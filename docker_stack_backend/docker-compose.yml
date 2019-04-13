@@ -1,0 +1,28 @@
+version: '2.0'
+services:
+  mosquitto:
+    image: eclipse-mosquitto:1.5
+    ports:
+    - 1883:1883
+    volumes:
+    - ./config:/mosquitto/config
+    - ./data:/mosquitto/data
+    - ./logs:/mosquitto/log
+  influxdb:
+    image: influxdb:latest
+    volumes:
+    - ./influxdb:/var/lib/influxdb
+  telegraf:
+    image: telegraf
+    volumes:
+    - ./telegraf.conf:/etc/telegraf/telegraf.conf:ro    
+    depends_on:
+    - mosquitto
+    - influxdb
+  grafana:
+    image: grafana/grafana:5.0.0
+    ports:
+    - 3000:3000
+    volumes:
+    - ./grafana_data:/var/lib/grafana
+    - ./grafana_conf:/etc/grafana

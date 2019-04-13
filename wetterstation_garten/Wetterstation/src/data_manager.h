@@ -19,13 +19,15 @@ class MqttManager {
             client.begin(HOST, net);
             connect();
         }
-        void manageConnection() {
+        bool manageConnection() {
             client.loop();
             if (!client.connected()) {
                 connect();
+                return true;
             }
+            return false;
         }
-        void log(char* message) {
+        void log(const char* message) {
             client.publish(T_LOG, message);
         }
         void publishData(char* topic, float value) {

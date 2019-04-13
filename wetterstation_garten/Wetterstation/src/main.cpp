@@ -5,19 +5,19 @@
 #include "temperature_manager.h";
 #include "wind_manager.h";
 
+#define DELAY 30000
+
 MqttManager mqtt;
 TemperatureManager temp;
 WindManager wind;
 
-Timer timer;
-
 void publishData() {
-  mqtt.log("timer::event");
+  mqtt.log((String("timer::event ") + String(millis())).c_str());
   temp.read();
 
   mqtt.publishData("/tmp1", temp.get(0));
   mqtt.publishData("/tmp2", temp.get(1));
-  mqtt.publishData("/wind", wind.getAndReset());
+  mqtt.publishData("/wind", static_cast<float>(wind.getAndReset()));
 }
 
 void setup() {
@@ -25,12 +25,20 @@ void setup() {
   mqtt.init();
   wind.init();
   mqtt.log("system::start");
-
-  timer.every(60000, publishData);
 }
 
 void loop() {
-  mqtt.manageConnection();
-  timer.update();
+  static unsigned long lastMeasure = 0 - DELAY;
+
+  if (mqtt.manageConnection()) {
+    mqtt.log("system::reconnect");
+  }
+
   wind.loop();
+
+  unsigned long now = millis();
+  if (now - lastMeasure >= DELAY) {
+      lastMeasure += DELAY;
+      publishData();
+  }
 }
